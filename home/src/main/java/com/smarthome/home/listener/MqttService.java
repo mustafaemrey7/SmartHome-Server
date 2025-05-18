@@ -4,12 +4,16 @@ import jakarta.annotation.PostConstruct;
 import org.eclipse.paho.client.mqttv3.*;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+
 @Service
 public class MqttService {
 
     private MqttClient client;
 
-    private String ledStatus = "unknown";
+    private HashMap<Long,Boolean> ledStatus = new HashMap<>();
     private String servoAngle = "unknown";
     private String temperature = "";
     private String humidity = "";
@@ -36,7 +40,7 @@ public class MqttService {
     private void handleMessage(String topic, MqttMessage message) {
         String msg = new String(message.getPayload());
         switch (topic) {
-            case "led/query" -> ledStatus = msg;
+            case "led/query" -> updateLedStatus(msg);
             case "servo/query" -> servoAngle = msg;
             case "dht/temp" -> temperature = msg;
             case "dht/hum" -> humidity = msg;
@@ -44,13 +48,29 @@ public class MqttService {
         }
     }
 
+    private void updateLedStatus(String msg) {
+        List<String> ledStatusOnOff = List.of(msg.split(":"));
+        String ledId = ledStatusOnOff.get(0);
+        String ledState = ledStatusOnOff.get(1);
+        updateLedStatusLMap(ledId,ledState);
+    }
+
+    private void updateLedStatusLMap(String ledId, String ledState) {
+        ledStatus.get(ledId).booleanValue();
+    }
+
     public void sendLedCommand(String state) throws MqttException {
         client.publish("led/command", new MqttMessage(state.getBytes()));
+    }
+
+    public void sendAcCommand(String state) throws MqttException {
+        client.publish("ac/command", new MqttMessage(state.getBytes()));
     }
 
     public void sendServoCommand(String dir) throws MqttException {
         client.publish("servo/command", new MqttMessage(dir.getBytes()));
     }
+
 
     public DeviceStatus getDeviceStatus() {
         return new DeviceStatus(ledStatus, servoAngle, temperature, humidity, motion);
