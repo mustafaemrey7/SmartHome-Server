@@ -22,6 +22,7 @@ public class MqttService {
     private String motion = "HIGH";
 
     private final Integer acId= 4;
+    private final Integer lockId= 5;
     @PostConstruct
     public void init() {
 
@@ -104,8 +105,8 @@ public class MqttService {
         client.publish("led/command", mqttMessage);
     }
 
-    public void sendLockCommand(Long roomId, String state) throws MqttException {/*4*/
-        String message = 5 + ":" + state;
+    public void sendLockCommand(String state) throws MqttException {/*5*/
+        String message = lockId + ":" + state;
         MqttMessage mqttMessage = new MqttMessage(message.getBytes());
         client.publish("led/command", mqttMessage);
     }
@@ -133,5 +134,31 @@ public class MqttService {
                 Double.valueOf(humidity),
                 motion
         );
+    }
+
+    public void allLigtsOn() {
+        try {
+            //String message = 0 + ":on" ;
+            //MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+            client.publish("led/command",  new MqttMessage("0:on".getBytes()));
+            client.publish("led/command",  new MqttMessage("1:on".getBytes()));
+            client.publish("led/command",  new MqttMessage("2:on".getBytes()));
+            client.publish("led/command",  new MqttMessage("3:on".getBytes()));
+        }
+        catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void allLigtsOff() {
+        try {
+            client.publish("led/command",  new MqttMessage("0:off".getBytes()));
+            client.publish("led/command",  new MqttMessage("1:off".getBytes()));
+            client.publish("led/command",  new MqttMessage("2:off".getBytes()));
+            client.publish("led/command",  new MqttMessage("3:off".getBytes()));
+        }
+        catch (MqttException e) {
+            e.printStackTrace();
+        }
     }
 }

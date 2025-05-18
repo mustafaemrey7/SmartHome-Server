@@ -30,9 +30,9 @@ public class DeviceController {
         mqttService.sendAcCommand(state);
     }
 
-    @PostMapping("/lock/{roomId}/{state}")
-    public void updateLock(@PathVariable Long roomId, @PathVariable String state) throws MqttException {
-        mqttService.sendLockCommand(roomId,state);
+    @PostMapping("/lock/{state}")
+    public void updateLock( @PathVariable String state) throws MqttException {
+        mqttService.sendLockCommand(state);
     }
 
     @PostMapping("/camera/{roomId}/{command}")
@@ -49,5 +49,15 @@ public class DeviceController {
     @ResponseBody
     public ResponseEntity<AllStatus> getAllStatus() {
         return ResponseEntity.ok().body(mqttService.getAllStatus());
+    }
+
+    @PostMapping(value ="/allLigts/on" )
+    public void allLigtsOn()  {
+        mqttService.allLigtsOn();
+    }
+
+    @PostMapping(value ="/allLigts/off" )
+    public void allLigtsOff()  {
+        mqttService.allLigtsOff();
     }
 }
