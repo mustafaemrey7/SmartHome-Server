@@ -1,6 +1,8 @@
 package com.smarthome.home.listener;
 
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,9 +25,9 @@ public class DeviceController {
         mqttService.sendLedCommand(roomId,state);
     }
 
-    @PostMapping("/ac/{roomId}/{state}")
-    public void updateAc(@PathVariable Long roomId, @PathVariable String state) throws MqttException {
-        mqttService.sendAcCommand(roomId,state);
+    @PostMapping("/ac/{state}")
+    public void updateAc(@PathVariable String state) throws MqttException {
+        mqttService.sendAcCommand(state);
     }
 
     @PostMapping("/lock/{roomId}/{state}")
@@ -43,9 +45,9 @@ public class DeviceController {
         return homeStatusService.getCurrentStatus();
     }
 
-    @GetMapping("/getAllStatus")
-    public AllStatus getAllStatus(){
-        return mqttService.getAllStatus();
-
+    @GetMapping(value = "/getAllStatus")
+    @ResponseBody
+    public ResponseEntity<AllStatus> getAllStatus() {
+        return ResponseEntity.ok().body(mqttService.getAllStatus());
     }
 }

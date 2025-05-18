@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class MqttService {
@@ -20,6 +21,7 @@ public class MqttService {
     private String humidity = "52.2";
     private String motion = "HIGH";
 
+    private final Integer acId= 4;
     @PostConstruct
     public void init() {
 
@@ -28,7 +30,7 @@ public class MqttService {
         }
 
         for (long i = 0; i <= 3; i++) {
-            servoAngles.put(i, 90L);
+            servoAngles.put(i, i*15);
         }
 
         try {
@@ -96,8 +98,8 @@ public class MqttService {
         client.publish("led/command", mqttMessage);
     }
 
-    public void sendAcCommand(Long roomId, String state) throws MqttException {/*4*/
-        String message = 4 + ":" + state;
+    public void sendAcCommand(String state) throws MqttException {/*4*/
+        String message = acId + ":" + state;
         MqttMessage mqttMessage = new MqttMessage(message.getBytes());
         client.publish("led/command", mqttMessage);
     }
@@ -116,6 +118,20 @@ public class MqttService {
 
 
     public AllStatus getAllStatus() {
-        return new AllStatus(ledStatus,servoAngles,Double.valueOf(temperature),Double.valueOf(humidity),motion);
+        List<Led> ledList = ledStatus.entrySet().stream()
+                .map(entry -> new Led(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+
+        List<Servo> servoList = servoAngles.entrySet().stream()
+                .map(entry -> new Servo(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+
+        return new AllStatus(
+                ledList,
+                servoList,
+                Double.valueOf(temperature),
+                Double.valueOf(humidity),
+                motion
+        );
     }
 }
