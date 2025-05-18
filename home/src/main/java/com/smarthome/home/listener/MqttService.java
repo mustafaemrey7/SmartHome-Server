@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 @Service
 public class MqttService {
@@ -14,13 +14,23 @@ public class MqttService {
     private MqttClient client;
 
     private HashMap<Long,Boolean> ledStatus = new HashMap<>();
-    private String servoAngle = "unknown";
-    private String temperature = "";
-    private String humidity = "";
-    private String motion = "";
+    private HashMap<Long,Long> servoAngles = new HashMap<>();
+
+    private String temperature = "55.0";
+    private String humidity = "52.2";
+    private String motion = "HIGH";
 
     @PostConstruct
     public void init() {
+
+        for (long i = 0; i <= 5; i++) {
+            ledStatus.put(i, i % 2 != 0);
+        }
+
+        for (long i = 0; i <= 3; i++) {
+            servoAngles.put(i, 90L);
+        }
+
         try {
             client = new MqttClient("tcp://localhost:1883", MqttClient.generateClientId());
             client.connect();
@@ -41,7 +51,7 @@ public class MqttService {
         String msg = new String(message.getPayload());
         switch (topic) {
             case "led/query" -> updateLedStatus(msg);
-            case "servo/query" -> servoAngle = msg;
+            case "servo/query" -> updateServoAngles(msg);
             case "dht/temp" -> temperature = msg;
             case "dht/hum" -> humidity = msg;
             case "motion" -> motion = msg;
@@ -52,27 +62,60 @@ public class MqttService {
         List<String> ledStatusOnOff = List.of(msg.split(":"));
         String ledId = ledStatusOnOff.get(0);
         String ledState = ledStatusOnOff.get(1);
-        updateLedStatusLMap(ledId,ledState);
+        updateLedStatusMap(Long.valueOf(ledId),Boolean.valueOf(ledState));
     }
 
-    private void updateLedStatusLMap(String ledId, String ledState) {
-        ledStatus.get(ledId).booleanValue();
+    private void updateLedStatusMap(Long ledId, Boolean ledState) {
+        for (Map.Entry<Long, Boolean> entry : ledStatus.entrySet()) {
+            Long key = entry.getKey();
+            if (key.equals(ledId)){
+                ledStatus.put(ledId, ledState);
+            }
+        }
     }
 
-    public void sendLedCommand(String state) throws MqttException {
-        client.publish("led/command", new MqttMessage(state.getBytes()));
+    private void updateServoAngles(String msg) {
+        List<String> ledServoStatusAngles = List.of(msg.split(":"));
+        String servoId = ledServoStatusAngles.get(0);
+        String servoAngle = ledServoStatusAngles.get(1);
+        updateServoAnglesMap(Long.valueOf(servoId),Long.valueOf(servoAngle));
     }
 
-    public void sendAcCommand(String state) throws MqttException {
-        client.publish("ac/command", new MqttMessage(state.getBytes()));
+    private void updateServoAnglesMap(Long servoId, Long servoAngle) {
+        for (Map.Entry<Long, Long> entry : servoAngles.entrySet()) {
+            Long key = entry.getKey();
+            if (key.equals(servoId)){
+                servoAngles.put(servoId, servoAngle);
+            }
+        }
     }
 
-    public void sendServoCommand(String dir) throws MqttException {
-        client.publish("servo/command", new MqttMessage(dir.getBytes()));
+    public void sendLedCommand(Long roomId, String state) throws MqttException {
+        String message = roomId + ":" + state;
+        MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+        client.publish("led/command", mqttMessage);
+    }
+
+    public void sendAcCommand(Long roomId, String state) throws MqttException {/*4*/
+        String message = 4 + ":" + state;
+        MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+        client.publish("led/command", mqttMessage);
+    }
+
+    public void sendLockCommand(Long roomId, String state) throws MqttException {/*4*/
+        String message = 5 + ":" + state;
+        MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+        client.publish("led/command", mqttMessage);
+    }
+
+    public void sendServoCommand(Long roomId, String command) throws MqttException {
+        String message = roomId + ":" + command;
+        MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+        client.publish("servo/command", mqttMessage);
     }
 
 
-    public DeviceStatus getDeviceStatus() {
-        return new DeviceStatus(ledStatus, servoAngle, temperature, humidity, motion);
+    public AllStatus getAllStatus() {
+        return new AllStatus(ledStatus,servoAngles,Double.valueOf(temperature),Double.valueOf(humidity),motion);
     }
 }

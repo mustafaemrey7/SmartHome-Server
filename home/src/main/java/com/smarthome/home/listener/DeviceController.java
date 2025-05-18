@@ -17,23 +17,35 @@ public class DeviceController {
         this.homeStatusService = homeStatusService;
     }
 
-    @PostMapping("/led/{state}")
-    public void setLed(@PathVariable String state) throws MqttException {
-        mqttService.sendLedCommand(state);
+
+    @PostMapping("/led/{roomId}/{state}")
+    public void updateLed(@PathVariable Long roomId, @PathVariable String state) throws MqttException {
+        mqttService.sendLedCommand(roomId,state);
     }
 
-    @PostMapping("/ac/{state}")
-    public void setAc(@PathVariable String state) throws MqttException {
-        mqttService.sendAcCommand(state);
+    @PostMapping("/ac/{roomId}/{state}")
+    public void updateAc(@PathVariable Long roomId, @PathVariable String state) throws MqttException {
+        mqttService.sendAcCommand(roomId,state);
     }
 
-    @PostMapping("/servo/{dir}")
-    public void setServo(@PathVariable String dir) throws MqttException {
-        mqttService.sendServoCommand(dir);
+    @PostMapping("/lock/{roomId}/{state}")
+    public void updateLock(@PathVariable Long roomId, @PathVariable String state) throws MqttException {
+        mqttService.sendLockCommand(roomId,state);
+    }
+
+    @PostMapping("/camera/{roomId}/{command}")
+    public void updateCamera(@PathVariable Long roomId, @PathVariable String command) throws MqttException {
+        mqttService.sendServoCommand(roomId,command);
     }
 
     @GetMapping("/getHomeStatus")
     public HomeStatus getHomeStatus() {
         return homeStatusService.getCurrentStatus();
+    }
+
+    @GetMapping("/getAllStatus")
+    public AllStatus getAllStatus(){
+        return mqttService.getAllStatus();
+
     }
 }
