@@ -65,7 +65,7 @@ public class MqttService {
         List<String> ledStatusOnOff = List.of(msg.split(":"));
         String ledId = ledStatusOnOff.get(0);
         String ledState = ledStatusOnOff.get(1);
-        updateLedStatusMap(Long.valueOf(ledId),Boolean.valueOf(ledState));
+        updateLedStatusMap(Long.valueOf(ledId),ledState.equals("HIGH"));
     }
 
     private void updateLedStatusMap(Long ledId, Boolean ledState) {
